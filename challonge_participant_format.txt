@@ -1,0 +1,35 @@
+# The challonge format for the 1st full row, given the number of participants
+# p = single participant
+# G = match between two participants
+
+2:  pp
+3:  pG
+4:  pp pp
+5:  pG pp
+6:  pG pG
+7:  pG GG
+8:  pp pp pp pp
+9:  pG pp pp pp
+10: pG pp pG pp
+11: pG pp pG pG
+12: pG pG pG pG
+13: pG GG pG pG
+14: pG GG pG GG
+15: pG GG GG GG
+16: pp pp pp pp pp pp pp pp
+17: pG pp pp pp pp pp pp pp 0
+18: pG pp pp pp pG pp pp pp 4
+19: pG pp pp pp pG pp pG pp 2
+20: pG pp pG pp pG pp pG pp -4
+21: pG pp pG pG pG pp pG pp 1
+22: pG pp pG pG pG pp pG pG 4
+23: pG pp pG pG pG pG pG pG -2
+24: pG pG pG pG pG pG pG pG -4
+25: pG GG pG pG pG pG pG pG 0
+26: pG GG pG pG pG GG pG pG 4
+27: pG GG pG pG pG GG pG GG 2
+28: pG GG pG GG pG GG pG GG -4
+29: pG GG GG GG pG GG pG GG -1
+30: pG GG GG GG pG GG GG GG 4
+31: pG GG GG GG GG GG GG GG -2
+32: pp pp pp pp pp pp pp pp pp pp 

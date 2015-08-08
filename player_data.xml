@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<data>
+    <player name="Frizz">
+        <rank>1</rank>
+        <tag name="Kansas City" />
+    </player>
+    <player name="Brail_l2k">
+        <rank>3</rank>
+        <tag name="Topeka" />
+    </player>
+    <player name="Rococo">
+        <tag name="Topeka" />
+    </player>
+    <player name="Reesch">
+        <tag name="Manhattan" />
+        <tag name="Topeka" />
+    </player>
+    <player name="Buzzroll">
+        <rank>2</rank>
+        <tag name="Manhattan" />
+    </player>
+    <player name="Lux">
+        <tag name="Lawrence" />
+    </player>
+    <player name="Hank Hanograph">
+        <rank>4</rank>
+    </player>
+    <player name="Obama Llama">
+        <tag name="Kansas City" />
+    </player>
+</data>
