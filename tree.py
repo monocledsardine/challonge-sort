@@ -60,6 +60,9 @@ class Leaf:
         def rank(self):
             return self._rank
 
+        def count(self):
+            return 1
+        
         def __str__(self):
             return str(self.name)
     
@@ -71,6 +74,8 @@ class Branch:
         self.content = content
         self.round_number = round_number
         self.parent = parent
+        self._count = content.count()
+        
         
     def rank(self):
         if self.content == None:
@@ -96,7 +101,10 @@ class Branch:
         if (self.round_number > round_number or round_number == 0):
             return itertools.chain(x.iter() for x in self.branches)
     
-        
+    # Count the children of this branch
+    def count(self):
+        return self._count    
+    
     def __str__(self):
         return (str(self.content))
     
@@ -158,6 +166,12 @@ class BranchPair:
         elif has_two:
             self.branches[self.branches.index(two)] =  one
     
+    def count(self):
+        s = 1
+        for b in self.branches:
+            s += b.count()
+        return s
+        
     def __str__(self):
         concat = "{"
         for x in self.branches:
@@ -172,8 +186,14 @@ class BranchPair:
         return concat
 
 class Tree:
-    def __init__(self, leaves):        
-        self.grow_branches(leaves)
+    def __init__(self, leaves, manual_grow=0):
+        if manual_grow:
+            self.leaves = leaves
+            self.branches = []
+            self.branchpairs = []
+        else:
+            self.grow_branches(leaves)
+        
         self.num_rounds = num_rounds(len(self.leaves))
     
         self.size = len(leaves)
@@ -234,6 +254,13 @@ class Tree:
 
         return bp
             
+    def define_leaves(self, fresh_leaves):
+        if len(fresh_leaves) != len(self.leaves):
+            raise NameError("Leaf size mismatch") 
+        
+        for i in range(len(self.leaves)):
+            self.leaves[i] = fresh_leaves[i]        
+            
     def get_parent(self):
         b = self.branchpairs[0]
         
@@ -242,17 +269,45 @@ class Tree:
         
         return b
     
-    def iter_branches(self, round_number=0):
-        # find the parent branchpair, and iterate recursively
-        bparent = self.get_parent()
-    
-        while round_number < 0:
-            round_number += num
-            
-        return bparent.iter_branches(round_number)
-    
     def print_verbose(self):
-        concat = "Leaves:\n" + str(len(self.leaves)) + "\n\nBranches:\n1\t2\t3\t4\t5\t6\n"
+        num_tabs=0
+        
+        def stringify_bp(bp, num_tabs):
+            num_tabs += 1
+            
+            print '{'
+            print_tabs(num_tabs)
+            
+            if isinstance(bp.branches[0].content, BranchPair):
+                stringify_bp(bp.branches[0].content, num_tabs)
+            else:
+                print str(bp.branches[0].content) + ","
+            
+            print_tabs(num_tabs)
+            
+            if isinstance(bp.branches[1].content, BranchPair):
+                stringify_bp(bp.branches[1].content, num_tabs)
+            else:
+                print str(bp.branches[1].content)
+            
+            num_tabs -= 1
+            print_tabs(num_tabs)
+            print '}'
+        
+        def print_tabs(num_tabs):
+            for i in range(num_tabs):
+                    sys.stdout.write('\t')
+                
+            sys.stdout.flush()
+                
+        #find the topmost branchpair
+        x = self.branchpairs[0]
+        while x.parent != None:
+            x = x.parent
+        
+        stringify_bp(x, num_tabs)
+    
+        '''concat = "Leaves:\n" + str(len(self.leaves)) + "\n\nBranches:\n1\t2\t3\t4\t5\t6\n"
         
         for x in self.branches:
             for i in range(x.round_number-1):
@@ -266,7 +321,7 @@ class Tree:
             x = x.parent
         concat += str(x) + "\n"
         
-        print(concat)
+        print(concat)'''
     
     def print_ends(self):
         print("Printing ends:")
@@ -302,15 +357,16 @@ def sort_tree(t, type=SORT_BY_QUALITY):
                     if ((x.round_number == branch.round_number
                         or (isinstance(x.content, Leaf) and isinstance(branch.content, Leaf)))
                         and x.parent != branch.parent):
+                        
+                        if x.count() == branch.count():                        
+                            q2 = x.parent.get_quality()
+                            r2 = x.rank()
 
-                        q2 = x.parent.get_quality()
-                        r2 = x.rank()
-
-                        temp_rating = abs(quality) + abs(q2) - abs(quality - rank + r2) - abs(q2 - r2 + rank)
-                        if temp_rating > rating:
-                            rating = temp_rating
-                            candidate = x
-                                
+                            temp_rating = abs(quality) + abs(q2) - abs(quality - rank + r2) - abs(q2 - r2 + rank)
+                            if temp_rating > rating:
+                                rating = temp_rating
+                                candidate = x
+                                    
                 if rating > 0:
                     branch.switch(candidate)
                     change_flag = 1

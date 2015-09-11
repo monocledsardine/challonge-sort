@@ -5,9 +5,9 @@ import os
 import random
 import unittest
 import bracketize
+import getbracket
 
 class bracketizeTestCase(unittest.TestCase):
-   
     def test_load_players(self):
         testL = bracketize.load_players('player_data.xml')
         for x in testL:
@@ -95,11 +95,11 @@ class treeTestCase(unittest.TestCase):
         
         ent = tree.Tree(make_leaves(n))
         print("Before sort:")
-        print(ent)
+        ent.print_verbose()
         
         tree.sort_tree(ent)
         print("After sort:")
-        print(ent)
+        ent.print_verbose()
         
         # Make sure that a sort with no restrictions and traditional seeding has all quality = 0
         for x in ent.branchpairs:
@@ -121,7 +121,28 @@ class treeTestCase(unittest.TestCase):
         print(pippin)
         
         pippin.print_ends()
+
+class getbracketTestCase(unittest.TestCase):
+    def test_generate(self):
+        t = tree.Tree(bracketize.load_players('player_data.xml'))
         
+        tname = 'foobar18'
+        
+        print "Saved " + getbracket.save_xml(tname)
+        
+        gimli = getbracket.generate_tree(tname + '-matches.xml')
+        
+        print "Gimli: " + str(len(gimli.leaves))
+        print "t: " + str(len(t.leaves))
+        
+        gimli.print_verbose()
+        
+        for l in gimli.leaves:
+            print l
+        
+        t.print_verbose()
+        
+        gimli.define_leaves(t.leaves)            
         
 if __name__ == "__main__":
     unittest.main()

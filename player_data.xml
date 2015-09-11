@@ -25,7 +25,28 @@
     <player name="Hank Hanograph">
         <rank>4</rank>
     </player>
-    <player name="Obama Llama">
+    <player name="Obama Llama1">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama2">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama3">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama4">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama5">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama6">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama7">
+        <tag name="Kansas City" />
+    </player>
+    <player name="Obama Llama8">
         <tag name="Kansas City" />
     </player>
 </data>

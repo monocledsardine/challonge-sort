@@ -1,5 +1,7 @@
 import sys
 import math
+import httplib
+import requests
 import challonge
 import tree
 import xml.etree.ElementTree as ET
