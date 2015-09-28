@@ -106,7 +106,7 @@ class Branch:
         return self._count    
     
     def __str__(self):
-        return (str(self.content))
+        return str(self.content)
     
 # Connects two branches. Rank() returns the higher rank of the two.
 # parent: the Branch which this BranchPair leads to in the bracket tree
@@ -280,6 +280,7 @@ class Tree:
             
             if isinstance(bp.branches[0].content, BranchPair):
                 stringify_bp(bp.branches[0].content, num_tabs)
+                print ': ' + str(bp.branches[0].count()) + ', ' + str(bp.get_quality()) + ', ' + str(bp.round_number)
             else:
                 print str(bp.branches[0].content) + ","
             
@@ -287,6 +288,7 @@ class Tree:
             
             if isinstance(bp.branches[1].content, BranchPair):
                 stringify_bp(bp.branches[1].content, num_tabs)
+                print ': ' + str(bp.branches[1].count()) + ', ' + str(bp.get_quality()) + ', ' + str(bp.round_number)
             else:
                 print str(bp.branches[1].content)
             
@@ -354,10 +356,7 @@ def sort_tree(t, type=SORT_BY_QUALITY):
                 rating = 0
                 candidate = None
                 for x in branches:
-                    if ((x.round_number == branch.round_number
-                        or (isinstance(x.content, Leaf) and isinstance(branch.content, Leaf)))
-                        and x.parent != branch.parent):
-                        
+                    if (x.parent != branch.parent):
                         if x.count() == branch.count():                        
                             q2 = x.parent.get_quality()
                             r2 = x.rank()
@@ -370,6 +369,7 @@ def sort_tree(t, type=SORT_BY_QUALITY):
                 if rating > 0:
                     branch.switch(candidate)
                     change_flag = 1
+                    break
                     if DEBUG_MODE:
                         print("Switched branch " + str(x) + " with " + str(branch))
                         i += 1

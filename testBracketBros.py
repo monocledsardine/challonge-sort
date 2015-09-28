@@ -10,12 +10,9 @@ import getbracket
 class bracketizeTestCase(unittest.TestCase):
     def test_load_players(self):
         testL = bracketize.load_players('player_data.xml')
-        for x in testL:
-            print x, x.rank(), x.tags
             
         t = tree.Tree(testL)
         tree.sort_tree(t)
-        print(t)
 
 def make_leaves(size):
     return [tree.Leaf(str(x), x) for x in range(1,size+1)]
@@ -94,18 +91,12 @@ class treeTestCase(unittest.TestCase):
         n = random.randint(2,33)
         
         ent = tree.Tree(make_leaves(n))
-        print("Before sort:")
-        ent.print_verbose()
         
         tree.sort_tree(ent)
-        print("After sort:")
-        ent.print_verbose()
         
         # Make sure that a sort with no restrictions and traditional seeding has all quality = 0
         for x in ent.branchpairs:
             self.assertEqual(x.get_quality(), 0)
-            
-        ent.print_ends()
         
     def test_sort_bad_seeds(self):
         leaves = [tree.Leaf("1", 1), tree.Leaf("2", 2),
@@ -113,14 +104,8 @@ class treeTestCase(unittest.TestCase):
             tree.Leaf("6a", 6), tree.Leaf("6b", 6),
             tree.Leaf("6c", 6)]
         pippin = tree.Tree(leaves)
-        print("Before weird sort:")
-        print(pippin)
         
         tree.sort_tree(pippin)
-        print("After weird sort:")
-        print(pippin)
-        
-        pippin.print_ends()
 
 class getbracketTestCase(unittest.TestCase):
     def test_generate(self):
@@ -142,7 +127,10 @@ class getbracketTestCase(unittest.TestCase):
         
         t.print_verbose()
         
-        gimli.define_leaves(t.leaves)            
+        gimli.define_leaves(t.leaves)
+        tree.sort_tree(gimli)
+        
+        gimli.print_verbose()
         
 if __name__ == "__main__":
     unittest.main()
