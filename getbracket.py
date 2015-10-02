@@ -1,16 +1,14 @@
 import sys
 import httplib
 import requests
-import tree
+import bracket
 import xml.etree.ElementTree as ET
 
-'''if len(sys.argv) <= 2:
-    print 'Gets the bracket from the challonge server.\n'
-    print 'Example Usage: getbracket.py username api-key'
-else:'''
-#output = open('matches.xml', 'w')
+def save_xml(tournament):
+    # TODO: Implement a more convenient authentication method
+    user = raw_input("Username: ")
+    apikey = getpass.getpass("API Key: ")
 
-def save_xml(tournament, user='Rococo', apikey='cKA7Mz88G2Kv1FEr2b25r0e3mrsJ4h1OcmJUAM1R'):
     r = requests.get('https://api.challonge.com/v1/tournaments/' + tournament + '/matches.xml', auth=(user, apikey))
 
     fname = tournament + '-matches.xml'

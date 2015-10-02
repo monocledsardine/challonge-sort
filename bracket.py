@@ -116,8 +116,8 @@ class branchedElement(collections.Container):
         return 0    
         
     def count(self):
-        """Count the number of elements contained in this one and return it.
-        Note that this element is included in the count as well as all sub-members.
+        """Count the number of sub-elements contained in this element and return it.
+        Note that this element is included in the count.
         
         Because each element has either two or zero branches, the count is a
         unique, one-to-one integer representation of the shape of the tree beneath
