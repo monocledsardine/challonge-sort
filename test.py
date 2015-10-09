@@ -1,6 +1,7 @@
 # test.py
-from bracket import bracketRound, branchedElement, rankedElement
+from bracket import bracketRound, branchedElement, rankedElement, print_bracket
 import unittest
+import getbracket
 
 class TestRounds(unittest.TestCase):
     def test_basic_stuff(self):
@@ -19,7 +20,11 @@ class TestElements(unittest.TestCase):
         # __init__
         b1 = branchedElement("one", "two")
         b1dupe = branchedElement(b1, b1)
-        self.assertTrue(b1dupe[0] != b1dupe[1])
+        #self.assertTrue(b1dupe[0] != b1dupe[1])
+        
+        b1 = branchedElement()
+        self.assertEqual(len(b1), 2)
+        self.assertEqual(b1.rank(), 0)
         
         # __getitem__
         b2 = branchedElement("hi", "there")
@@ -39,18 +44,18 @@ class TestElements(unittest.TestCase):
         self.assertEqual(len(b2), 0)
         
         # __contains__
-        b3 = branchedElement(rankedElement(4), rankedElement(4))
+        b3 = branchedElement(rankedElement("four", 4), rankedElement("4", 4))
         b3first = b3[0]
         self.assertTrue(b3first in b3)
-        self.assertFalse(rankedElement(4) in b3)
+        self.assertFalse(rankedElement("bloop", 4) in b3)
         
     def test_rank(self):
         # simple, ranked element
-        b1 = rankedElement(10)
+        b1 = rankedElement("ten", 10)
         self.assertEqual(b1.rank(), 10)
         
         # two ranked members
-        b2 = branchedElement(rankedElement(4), rankedElement(8))
+        b2 = branchedElement(rankedElement("four", 4), rankedElement("eight", 8))
         self.assertEqual(b2[0].rank(), 4)
         self.assertEqual(b2[1].rank(), 8)
         self.assertEqual(b2.rank(), 4)
@@ -59,19 +64,24 @@ class TestElements(unittest.TestCase):
         b3 = branchedElement(rankedElement(), rankedElement())
         self.assertEqual(b3.rank(), 0)
         
+        b3[0].set_rank(5)
+        b3[1].set_rank(4)
+        
+        self.assertEqual(b3.rank(), 4)
+        
     def test_sum_members(self):
-        b1 = branchedElement(rankedElement(8), rankedElement(2))
+        b1 = branchedElement(rankedElement("eight", 8), rankedElement("two", 2))
         self.assertEqual(b1.sum_members(), 10)
     
     def test_count(self):
         b1 = branchedElement(branchedElement(rankedElement(), rankedElement()), rankedElement())
         self.assertEqual(b1.count(), 5)
 
-    def test_rate(self):
-        b1 = rankedElement(1)
-        b2 = rankedElement(2)
-        b3 = rankedElement(7)
-        b4 = rankedElement(16)
+    def test_residual(self):
+        b1 = rankedElement(rank=1)
+        b2 = rankedElement(rank=2)
+        b3 = rankedElement(rank=7)
+        b4 = rankedElement(rank=16)
         
         b5 = branchedElement(b1, b2)
         b6 = branchedElement(b2, b3)
@@ -81,6 +91,64 @@ class TestElements(unittest.TestCase):
         
         self.assertEqual(b1.residual(r1), 0)
         self.assertEqual(b1.residual(r1.shift(-1)), -1)
-    
+        
+    def test_swap(self):
+        b1 = rankedElement("Charles", 1)
+        b2 = rankedElement("Anakin", 2)
+        b3 = rankedElement("George", 3)
+        
+        b4 = branchedElement(b1, b2)
+        b5 = branchedElement(b3, b4)
+                
+        self.assertEqual(b5[0].rank(), 3) 
+        self.assertEqual(b5[0].name, "George") 
+        
+        b1.swap(b3)
+        
+        self.assertEqual(b5[0].rank(), 1) 
+        self.assertEqual(b5[0].name, "Charles") 
+                
+        self.assertEqual(b4[0].rank(), 3) 
+        self.assertEqual(b4[0].name, "George")
+        
+        b5[0].swap(b4[0])
+        
+        self.assertEqual(b5[0].rank(), 3) 
+        self.assertEqual(b5[0].name, "George")
+
+        self.assertEqual(b4[0].rank(), 1) 
+        self.assertEqual(b4[0].name, "Charles")
+        
+        with self.assertRaises(ValueError):
+            b5.swap(b4)
+        
+        b6 = rankedElement("Errol", 4)
+        b7 = rankedElement("Hedwig", 5)
+        
+        b8 = branchedElement(b6, b7)
+        
+        b8.swap(b4)
+        
+        self.assertEqual(b4.rank(), 4)
+        self.assertEqual(b8.rank(), 1)
+        
+        b9 = branchedElement(b3, branchedElement(b1, b2))
+        b9.swap(b4)
+        
+        self.assertEqual(b9.count(), 3)
+        self.assertEqual(b4.count(), 5)
+        
+class TestGetBracket(unittest.TestCase):
+    def test_getbracket(self):
+        getbracket.save_xml("foobar18")
+        be = getbracket.generate("foobar18-matches.xml")
+        
+        if getbracket.DEBUG:
+            print_bracket(be)
+        
+        self.assertEqual(len(be), 2)
+        self.assertEqual(be.count(), 29)
+        self.assertEqual(be.count_ranked(), 15)
+        
 if __name__ == "__main__":
     unittest.main()
