@@ -1,11 +1,12 @@
 # test.py
 from bracket import bracketRound, branchedElement, rankedElement, print_bracket
+import bracket
 import unittest
 import getbracket
 
 class TestRounds(unittest.TestCase):
     def test_basic_stuff(self):
-        r1 = bracketRound(participants=10, round=1)
+        r1 = bracketRound(participants=10, round=0)
         
         self.assertEqual(r1.min_rank(), 7)
         self.assertEqual(r1.max_rank(), 16)
@@ -87,10 +88,18 @@ class TestElements(unittest.TestCase):
         b6 = branchedElement(b2, b3)
         b7 = branchedElement(b1, b4)
         
-        r1 = bracketRound(participants=7, round=2)
+        r1 = bracketRound(participants=7, round=1)
         
         self.assertEqual(b1.residual(r1), 0)
         self.assertEqual(b1.residual(r1.shift(-1)), -1)
+        
+        b8 = rankedElement(rank=6)
+        b10 = rankedElement(rank=7)
+        b9 = branchedElement(b8, b10)
+        r2 = bracketRound(participants=8, round=1)
+        
+        self.assertEqual(b9.residual(r2), 4)
+        self.assertEqual(b8.residual(r2.shift(-1)), 0)
         
     def test_swap(self):
         b1 = rankedElement("Charles", 1)
@@ -139,16 +148,29 @@ class TestElements(unittest.TestCase):
         self.assertEqual(b4.count(), 5)
         
 class TestGetBracket(unittest.TestCase):
-    def test_getbracket(self):
-        getbracket.save_xml("foobar18")
-        be = getbracket.generate("foobar18-matches.xml")
+    '''def test_getbracket(self):
+        name = "foobar-18"
+        fullname = "foobar18-matches.xml"
+        getbracket.save_xml(name)
+    
+        be = getbracket.generate(fullname)
         
         if getbracket.DEBUG:
             print_bracket(be)
         
         self.assertEqual(len(be), 2)
         self.assertEqual(be.count(), 29)
-        self.assertEqual(be.count_ranked(), 15)
+        self.assertEqual(be.count_ranked(), 15)'''
+        
+    def test_sort(self):
+        getbracket.save_xml("foobar18")
+        
+        be = getbracket.generate("foobar18-matches.xml", "foobar18-participants.xml")
+               
+        bracket.sort(be)
+        
+        if getbracket.DEBUG:
+            print_bracket(be)
         
 if __name__ == "__main__":
     unittest.main()

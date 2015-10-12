@@ -15,7 +15,7 @@ def _num_rounds(num_participants):
     
 class bracketRound(object):
     """Structural information for a round of a bracket."""
-    def __init__(self, participants, round):
+    def __init__(self, participants, round=0):
         """Create a specified round for a bracket with a certain number
         of participants.
         
@@ -27,7 +27,7 @@ class bracketRound(object):
         while size < self._participants:
             size *= 2
             
-        self._roundSize = size / (2**(self._round-1))
+        self._roundSize = size / (2**(self._round))
         
     def particpants(self):
         return self._participants
@@ -37,13 +37,13 @@ class bracketRound(object):
         standard, incremental ranking and a seeded bracket.
         
         """        
-        if self._round == 1:
+        if self._round == 0:
             return self._roundSize - self._participants + 1
         
-        if self._round == 2:
+        if self._round == 1:
             return min(1, self._roundSize*2 - self._participants)
         
-        if self._round < 1:
+        if self._round < 0:
             return self._roundSize//2 + 1
             
         return 0
@@ -53,10 +53,10 @@ class bracketRound(object):
         standard, incremental ranking and a seeded bracket.
         
         """
-        if self._round == 2:
+        if self._round == 1:
             return max(0, self._roundSize*2 - self._participants)
 
-        if self._round < 2:
+        if self._round < 1:
             return self._roundSize
             
         return 0
@@ -98,7 +98,7 @@ class branchedElement(collections.Container):
         
     def __contains__(self, value):
         return value in self._members
-    
+        
     def _rank_member(self, m):
         if isinstance(m, branchedElement) or isinstance(m, rankedElement):
             return m.rank()
@@ -169,7 +169,8 @@ class branchedElement(collections.Container):
         is being seeded higher than expected.
 
         """
-        return (self.sum_members()-1-round.round_size())
+       
+        return (self.sum_members()-1-round.round_size()*2)
         
     def swap(self, other):
         """ Swap this element with another branched element in the bracket. This swap is purely
@@ -196,9 +197,15 @@ class rankedElement(object):
     def __init__(self, name="", rank=0, **kwargs):
         """Create a single, ranked element of a bracket"""
         self._rank = rank
-        self.name = name
+        
+        if name == "":
+            self.name = str(rank)
+        else:        
+            self.name = name
+            
         self.round = round
         self.tags = kwargs
+        self._count = 1
     
     def __str__(self):
         return str(self.name)
@@ -270,7 +277,8 @@ def print_bracket(top):
     """
     num_tabs=0
     num_participants=top.count_ranked()
-
+    top.count()
+    
     def stringify_branch(b, num_tabs):
  
     
@@ -309,38 +317,65 @@ def sort(top):
     use a different approach for maximum efficiency.
     
     """
-    change_flag = True
-    while change_flag:
-        change_flag = False
+    num_participants = top.count_ranked()
+    top.count()
+    round = bracketRound(num_participants)
+    e_round = bracketRound(num_participants)
+    
+    def rate_swap(e1, e2, r2=None):
+        # rate a swap between two elements
+        if e1 == None or e2 == None:
+            return 0
         
+        if e1._count != e2._count:
+            return 0
+        
+        r1 = e1.residual(round)
+        if r2 == None:
+            r2 = e2.residual(e_round)
+        
+        return abs(r1) + abs(r2) - abs(r1 - e1._rank + e2._rank) - abs(r2 - e2._rank + e1._rank)
     
+    def audition_swap(t, e):
+        #find a swap candidate under top for element e
+        tryout = None
+        max_rating = 0
     
-    
-        change_flag = False
-        branches = t.branches[:]   
-        while len(branches) > 1:
-            branch = branches.pop()
-            rank = branch.rank()
-            quality = branch.parent.get_quality()
+        if rate_swap(t, e) > max_rating:
+            return t
             
-            rating = 0
-            candidate = None
-            for x in branches:
-                if (x.parent != branch.parent):
-                    if x.count() == branch.count():                        
-                        q2 = x.parent.get_quality()
-                        r2 = x.rank()
+        if isinstance(t, branchedElement):
+            round.shift(-1)
+            tryout1 = audition_swap(t[0], e)
+            tryout2 = audition_swap(t[1], e)
 
-                        temp_rating = abs(quality) + abs(q2) - abs(quality - rank + r2) - abs(q2 - r2 + rank)
-                        if temp_rating > rating:
-                            rating = temp_rating
-                            candidate = x
-                                
-            if rating > 0:
-                branch.switch(candidate)
-                change_flag = True
-                break
-   
+            rating1 = rate_swap(tryout1, e)
+            rating2 = rate_swap(tryout2, e)
+            
+            if rating1 > max_rating:
+                tryout = tryout1
+                max_rating = rating1
+            
+            if rating2 > max_rating:
+                tryout = tryout2
+                max_rating = rating2
+            
+            round.shift(1)
+        
+        return tryout
+        
+    def actually_swap(e):
+        if isinstance(e, branchedElement):
+            e_round.shift(-1)
+            actually_swap(e[0])
+            actually_swap(e[1])
+            e_round.shift(1)
+            
+        tryout = audition_swap(top, e)
+        if rate_swap(tryout, e) > 0:
+            e.swap(tryout)
+            
+    actually_swap(top)
     
 class RoundIter(object):
     """Iterates through a single row, or round, of a bracket"""

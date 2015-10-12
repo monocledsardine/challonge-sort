@@ -12,6 +12,13 @@ def save_xml(tournament):
     user = raw_input("Username: ")
     apikey = getpass.getpass("API Key: ")
 
+    r = requests.get('https://api.challonge.com/v1/tournaments/' + tournament + '/participants.xml', auth=(user, apikey))
+
+    fname = tournament + '-participants.xml'
+    output = open(fname, 'w')
+    output.write(r.text)
+    output.close()
+
     r = requests.get('https://api.challonge.com/v1/tournaments/' + tournament + '/matches.xml', auth=(user, apikey))
 
     fname = tournament + '-matches.xml'
@@ -46,38 +53,45 @@ def _find_top_match(root):
     
     return None
     
-def generate(matchfile):
+def generate(matchfile, participantfile=''):
     """ Generate a bracket from a file of matches.
     
-    @matchfile: The location of XML file containing match information 
+    @matchfile: The location of the XML file containing match information 
+    @playerfile: The location of the XML file containing player information
     
     """
     tourney = ET.parse(matchfile)
     root = tourney.getroot()    
-    return generate_branch(_find_top_match(root), root)
+    participants = ET.parse(participantfile).getroot()
+    return generate_branch(_find_top_match(root), root, participants)
    
-def generate_player(name, rank=0):
-    """ Generate a player as a rankedElement
+def generate_participant(id, participants):
+    """ Generate a participant in the tournament as a rankedElement
 
-    @name: the unique string used to identify the player
-    @rank: the seeding of the player in the bracket
+    @id: the number used to identify the participant in the XML file
+    @participants: the root for the element tree containing all participants
     
     """
-    return bracket.rankedElement(name, rank)
+    
+    for p in participants.iter("participant"):
+        for element in p.iter("id"):
+            if element.text == id:
+                return bracket.rankedElement(p.find("name").text, int(p.find("seed").text))
+    
+    raise ValueError("The player with ID " + id + " was not found.")
 
-
-def generate_branch(match, root):
+def generate_branch(match, root, participants):
     matchref = match.find('player1-prereq-match-id')
     
     if matchref.get('nil') != 'true':
-        member1 = generate_branch(_find_match(root, matchref.text), root)
+        member1 = generate_branch(_find_match(root, matchref.text), root, participants)
     else:
-        member1 = generate_player(match.find('player1-id').text)
+        member1 = generate_participant(match.find('player1-id').text, participants)
     
     matchref = match.find('player2-prereq-match-id')
     if matchref.get('nil') != 'true':
-        member2 = generate_branch(_find_match(root, matchref.text), root)
+        member2 = generate_branch(_find_match(root, matchref.text), root, participants)
     else:
-        member2 = generate_player(match.find('player2-id').text)
+        member2 = generate_participant(match.find('player2-id').text, participants)
         
     return bracket.branchedElement(member1, member2)
