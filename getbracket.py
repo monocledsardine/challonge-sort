@@ -37,18 +37,18 @@ def _find_match(root, matchid):
             return m
             
 def _find_top_match(root):
-    round = 0
+    phase = 0
     m_temp = None
     for m in root.iter('match'):
         # Run the gamut of avaiable matches checks
-        if int(m.find('round').text) <= round:
+        if int(m.find('round').text) <= phase:
             continue
         
-        round = int(m.find('round').text)
+        phase = int(m.find('round').text)
         m_temp = m
     
     for m in root.iter('match'):
-        if round-1 == int(m.find('round').text):
+        if phase-1 == int(m.find('round').text):
             return m
     
     return None
@@ -63,7 +63,8 @@ def generate(matchfile, participantfile=''):
     tourney = ET.parse(matchfile)
     root = tourney.getroot()    
     participants = ET.parse(participantfile).getroot()
-    return generate_branch(_find_top_match(root), root, participants)
+    be = generate_branch(_find_top_match(root), root, participants)
+    return bracket.bracket(be)
    
 def generate_participant(id, participants):
     """ Generate a participant in the tournament as a rankedElement

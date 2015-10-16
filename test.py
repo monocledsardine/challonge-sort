@@ -1,20 +1,29 @@
 # test.py
-from bracket import bracketRound, branchedElement, rankedElement, print_bracket
+from bracket import bracketPhase, branchedElement, rankedElement
 import bracket
 import unittest
 import getbracket
 
-class TestRounds(unittest.TestCase):
+class TestPhases(unittest.TestCase):
     def test_basic_stuff(self):
-        r1 = bracketRound(participants=10, round=0)
+        r1 = bracketPhase(participants=10, phase=0)
         
         self.assertEqual(r1.min_rank(), 7)
         self.assertEqual(r1.max_rank(), 16)
         
-        r1.shift(1)
+        r1 = r1.shifted(1)
         
         self.assertEqual(r1.min_rank(), 1)
         self.assertEqual(r1.max_rank(), 6)
+        
+        r2 = bracketPhase(participants=4).shifted_to_top()
+        self.assertEqual(r2.size(), 1)
+        self.assertEqual(r2.min_rank(), 0)
+        self.assertEqual(r2.max_rank(), 0)
+        
+        r2 = r2.shifted(-2)
+        self.assertEqual(r2.min_rank(), 1)
+        self.assertEqual(r2.max_rank(), 4)
     
 class TestElements(unittest.TestCase):
     def test_list_functions(self):
@@ -78,6 +87,27 @@ class TestElements(unittest.TestCase):
         b1 = branchedElement(branchedElement(rankedElement(), rankedElement()), rankedElement())
         self.assertEqual(b1.count(), 5)
 
+    def test_phase(self):
+        b1 = rankedElement(rank=1)
+        b2 = rankedElement(rank=2)
+        
+        self.assertEqual(b1.phase.size(), 1)
+        self.assertEqual(b2.phase.size(), 1)
+        
+        b3 = branchedElement(b1, b2)
+        
+        self.assertEqual(b1.phase.size(), 1)
+        self.assertEqual(b2.phase.size(), 1)
+        
+        self.assertEqual(b3.phase, None)
+        
+        b3.phase = bracketPhase(2).shifted_to_top()
+        
+        self.assertEqual(b1.phase.size(), 2)
+        self.assertEqual(b2.phase.size(), 2)
+        self.assertEqual(b3.phase.size(), 1)
+        self.assertEqual(b1.phase, b2.phase)
+        
     def test_residual(self):
         b1 = rankedElement(rank=1)
         b2 = rankedElement(rank=2)
@@ -85,21 +115,45 @@ class TestElements(unittest.TestCase):
         b4 = rankedElement(rank=16)
         
         b5 = branchedElement(b1, b2)
-        b6 = branchedElement(b2, b3)
-        b7 = branchedElement(b1, b4)
+        b6 = branchedElement(b3, b4)
         
-        r1 = bracketRound(participants=7, round=1)
+        r1 = bracketPhase(participants=4).shifted_to_top()
+        b7 = branchedElement(b5, b6, r1)
         
-        self.assertEqual(b1.residual(r1), 0)
-        self.assertEqual(b1.residual(r1.shift(-1)), -1)
+        self.assertEqual(b1.residual(), 0)
+        self.assertEqual(b2.residual(), 0)
+        self.assertEqual(b3.residual(), 3)
+        self.assertEqual(b4.residual(), 12)
+        self.assertEqual(b5.residual(), -2)
+        self.assertEqual(b6.residual(), 18)
+        self.assertEqual(b7.residual(), 5)
         
         b8 = rankedElement(rank=6)
-        b10 = rankedElement(rank=7)
-        b9 = branchedElement(b8, b10)
-        r2 = bracketRound(participants=8, round=1)
+        b9 = rankedElement(rank=7)
         
-        self.assertEqual(b9.residual(r2), 4)
-        self.assertEqual(b8.residual(r2.shift(-1)), 0)
+        b10 = branchedElement(b8, b9)
+        
+        r2 = bracketPhase(participants=6).shifted_to_top()
+        b11 = branchedElement(b7, b10, r2)
+        
+        self.assertEqual(b1.residual(), -2)
+        self.assertEqual(b2.residual(), -1)
+        self.assertEqual(b3.residual(), 0)
+        self.assertEqual(b4.residual(), 8)
+        self.assertEqual(b5.residual(), -6)
+        self.assertEqual(b6.residual(), 14)
+        self.assertEqual(b7.residual(), 3)
+        self.assertEqual(b8.residual(), 4)
+        self.assertEqual(b9.residual(), 5)
+        self.assertEqual(b10.residual(), 8)
+        self.assertEqual(b11.residual(), 4)
+        
+    def test_phase(self):
+        b1 = rankedElement()
+        b2 = rankedElement()
+        b3 = rankedElement()
+        b4 = branchedElement(b1, b2)
+        b5 = branchedElement(b3, b4)
         
     def test_swap(self):
         b1 = rankedElement("Charles", 1)
@@ -147,30 +201,65 @@ class TestElements(unittest.TestCase):
         self.assertEqual(b9.count(), 3)
         self.assertEqual(b4.count(), 5)
         
-class TestGetBracket(unittest.TestCase):
-    '''def test_getbracket(self):
-        name = "foobar-18"
-        fullname = "foobar18-matches.xml"
-        getbracket.save_xml(name)
+    def test_iter(self):
+        composers = ["Ludwig", "Copland", "Bernstein", "Britten", "Schubert", "Chopin"]
     
-        be = getbracket.generate(fullname)
+        b1 = rankedElement(composers[0])
+        b2 = rankedElement(composers[1])
+        b3 = rankedElement(composers[2])
+        b4 = rankedElement(composers[3])
+        b5 = rankedElement(composers[4])
+        b6 = rankedElement(composers[5])
+        b7 = branchedElement(b1, b2)
+        b8 = branchedElement(b3, b4)
         
-        if getbracket.DEBUG:
-            print_bracket(be)
+        b9 = branchedElement(b5, b7)
+        b10 = branchedElement(b6, b8)
         
-        self.assertEqual(len(be), 2)
-        self.assertEqual(be.count(), 29)
-        self.assertEqual(be.count_ranked(), 15)'''
+        top = branchedElement(b9, b10)
         
+        br = bracket.bracket(top)
+        
+        elements = [b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, top]
+        
+        for e in br:
+            if e in elements:
+                elements.remove(e)
+            else:
+                raise ValueError("Found element " + str(e) + " in this tree for some reason!")
+                
+        self.assertEqual(len(elements), 0)
+        
+class TestBracket(unittest.TestCase):
+    def get_bracket(self):
+        return getbracket.generate("foobar18-matches.xml", "foobar18-participants.xml")
+        
+    def test_print(self):
+        b = self.get_bracket()
+        
+        #print_bracket(b)
+    
     def test_sort(self):
-        getbracket.save_xml("foobar18")
+        b = self.get_bracket()
         
-        be = getbracket.generate("foobar18-matches.xml", "foobar18-participants.xml")
-               
-        bracket.sort(be)
+        counts = {1:[], 3:[], 5:[], 7:[], 13:[], 15:[], 29:[]}
+        for e in b:
+            counts[e._count].append(e)
         
-        if getbracket.DEBUG:
-            print_bracket(be)
+        ranks = {}
+        for e in counts[1]:
+            ranks[e._rank] = e
         
+        self.assertEqual(b._rate_swap(counts[7][0][0], counts[7][0], counts[3][1][0], counts[3][1]), 0)
+        
+        print "---------------------- BEFORE SORT ----------------------"
+        b.print_verbose()
+        b.sort()
+        print "---------------------- AFTER  SORT ----------------------"
+        b.print_verbose()
+        
+        for e in b:
+            self.assertEqual(e.residual(), 0)
+       
 if __name__ == "__main__":
     unittest.main()
