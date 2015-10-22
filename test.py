@@ -1,8 +1,32 @@
 # test.py
-from bracket import bracketPhase, branchedElement, rankedElement
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Jonathan Miller
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import bracket
+from bracket import bracketPhase, branchedElement, rankedElement
 import unittest
 import getbracket
+import random
 
 class TestPhases(unittest.TestCase):
     def test_basic_stuff(self):
@@ -231,6 +255,13 @@ class TestElements(unittest.TestCase):
         self.assertEqual(len(elements), 0)
         
 class TestBracket(unittest.TestCase):
+    def generate_bracket(self, num):
+        participants = []
+        for i in range(num):
+            participants.append(rankedElement(str(i), i))
+        
+        random.shuffle(participants)
+    
     def get_bracket(self):
         return getbracket.generate("foobar18-matches.xml", "foobar18-participants.xml")
         
@@ -252,14 +283,39 @@ class TestBracket(unittest.TestCase):
         
         self.assertEqual(b._rate_swap(counts[7][0][0], counts[7][0], counts[3][1][0], counts[3][1]), 0)
         
-        print "---------------------- BEFORE SORT ----------------------"
-        b.print_verbose()
+        if bracket.DEBUG:
+            print "---------------------- BEFORE SORT ----------------------"
+            b.print_verbose()
+        
         b.sort()
-        print "---------------------- AFTER  SORT ----------------------"
-        b.print_verbose()
+            
+        if bracket.DEBUG:
+            print "---------------------- AFTER  SORT ----------------------"
+            b.print_verbose()
         
         for e in b:
             self.assertEqual(e.residual(), 0)
-       
+        
+    def test_iter_phase(self):
+        b = self.get_bracket()
+        
+        f = b.iter_phase(0)
+        g = b.iter_phase(1)
+        
+        ranked_elements = [i.rank() for i in g]
+        ranked_elements += [i.rank() for i in f]
+        
+        self.assertEqual(ranked_elements, [12,8,9,4,6,3,1,2,15,7,10,5,14,13,11])
+    
+    def test_really_big_sort(self):
+        #print "Testing really big sort..."
+        
+        self.generate_bracket(1000)
+
+    def test_post(self):
+        #b = self.get_bracket()
+        #getbracket.post_bracket(b, "foobar19")
+        pass
+        
 if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,35 @@
 # bracket.py
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Jonathan Miller
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import collections
 import math
 import copy
 import sys
+import itertools
     
+DEBUG = True
+
 class bracketPhase(object):
     """Structural information for a phase of a bracket."""
     def __init__(self, participants, phase=0):
@@ -77,6 +103,10 @@ class bracketPhase(object):
     def shifted_to_top(self):
         """Return a phase with size 1 that is otherwise the same as this phase."""
         return self.shifted(math.floor(math.log(self._size, 2)))
+        
+    def number(self):
+        """ Return the phase number of this phase. """
+        return self._phase
 
 class branchedElement(collections.Container):
     """A member of a bracket which contains two child members"""
@@ -103,6 +133,32 @@ class branchedElement(collections.Container):
         for j in self[1]:
             yield j
         
+    def iter_phase(self, phasenum, req_count=1):
+        """ Returns a generator for the elements from a specific phase. Elements are
+        iterated through in challonge seeding order, based on the shape of the tree.
+        
+        @phasenum: the index of the phase to be compared against the element's phase index.
+        @req_count: the count required for the element to be included. 0 means there are 
+        no count restrictions.
+        
+        """
+        if self.phase.number() == phasenum:
+            if self._count == req_count or req_count == 0:
+                yield self
+        
+        heavy_side = 0
+        if self[0]._count < self[1]._count:
+            heavy_side = 1
+        
+        first_side = heavy_side
+        if self._count % 8 == 5:
+            first_side = not heavy_side
+            
+        for i in self[first_side].iter_phase(phasenum, req_count):
+            yield i
+        for j in self[not first_side].iter_phase(phasenum, req_count):
+            yield j
+            
     def __getitem__(self, index):
         return self._members[index]
 
@@ -267,6 +323,18 @@ class rankedElement(object):
         """ Returns this element. Helps the iteration process through a bracket."""
         yield self
     
+    def iter_phase(self, phasenum, req_count=1):
+        """ Returns a generator for this element if it is from the given phase and count.
+        
+        @phasenum: the index of the phase to be compared against the element's phase index.
+        @req_count: the count required for the element to be included. 0 means there are 
+        no count restrictions.
+        
+        """
+        if self.phase.number() == phasenum:
+            if self._count == req_count or req_count == 0:
+                yield self
+    
     def __str__(self):
         return str(self.name)
     
@@ -357,6 +425,23 @@ class bracket(collections.Container):
         for i in self.top:
             yield i
         
+    def iter_phase(self, phasenum, req_count=1):
+        """ Returns a generator for the elements from a specific phase. Elements are
+        iterated through in challonge seeding order, based on the shape of the tree.
+        
+        @phasenum: the index of the phase to be compared against the element's phase index.
+        @req_count: the count required for the element to be included. 0 means there are 
+        no count restrictions.
+        
+        """
+        for i in self.top.iter_phase(phasenum, req_count):
+            yield i
+    
+    def iter_ranked(self):
+        """ Return an iterator for the ranked elements in this bracket, in bracket order, 
+        starting with the highest seeded member."""
+        return itertools.chain(self.iter_phase(1), self.iter_phase(0))
+        
     def _rate_swap(self, a, apar, b, bpar):
         """Rate a swap between two elements from this bracket."""
         if a == b:
@@ -411,16 +496,16 @@ class bracket(collections.Container):
             e.swap(tryout)
            
     def _get_rankeds(self):
-        participles = []
+        participants = []
         
         for e in self:
             if e._count in [3,5]:
                 if e[0]._count == 1:
-                    participles.append((e[0], e))
+                    participants.append((e[0], e))
                 if e[1]._count == 1:
-                    participles.append((e[1], e))
+                    participants.append((e[1], e))
         
-        return participles
+        return participants
         
     def _get_branches(self):
         branches = []
